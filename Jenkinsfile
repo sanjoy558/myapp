@@ -2,25 +2,29 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                echo '📥 Pulling source code'
+                echo '📥 Cloning from GitHub...'
                 checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo '🐳 Building Docker Image'
+                echo '🐳 Building Docker image...'
                 sh 'docker build -t myapp:latest .'
             }
         }
 
-        stage('Run Container') {
+        stage('Run Docker Container') {
             steps {
-                echo '🚀 Running Docker Container'
-                sh 'docker run -d -p 3001:3000 --name myapp_ci myapp:latest || true'
+                echo '🚀 Running container on port 3001...'
+                // Stop existing container if exists
+                sh 'docker rm -f myapp_ci || true'
+                // Run fresh container
+                sh 'docker run -d -p 3001:3000 --name myapp_ci myapp:latest'
             }
         }
     }
 }
+
