@@ -25,6 +25,13 @@ pipeline {
                 sh 'docker run -d -p 3001:3000 --name myapp_ci myapp:latest'
             }
         }
+
+         stages {
+        stage('Verify') {
+            steps {
+                sh 'echo Jenkins pipeline is working!'
+            }
+        }
     }
 }
 
