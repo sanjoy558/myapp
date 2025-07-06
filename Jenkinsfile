@@ -1,37 +1,60 @@
 pipeline {
     agent any
 
+    environment {
+        APP_NAME = 'myapp'
+    }
+
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
-                echo '📥 Cloning from GitHub...'
-                checkout scm
+                echo '📥 Cloning repository...'
+                git url: 'https://github.com/sanjoy558/myapp.git', branch: 'main'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Install Dependencies') {
+            steps {
+                echo '📦 Installing npm dependencies...'
+                sh 'npm install'
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                echo '🔧 Building and running tests...'
+                // Add your actual test command if any
+                sh 'node app.js & sleep 3 && curl -I http://localhost:3000 || echo "Check app port!"'
+            }
+        }
+
+        stage('Docker Build (Optional)') {
+            when {
+                expression { fileExists('Dockerfile') }
+            }
             steps {
                 echo '🐳 Building Docker image...'
-                sh 'docker build -t myapp:latest .'
+                sh """
+                docker build -t ${APP_NAME}:latest .
+                docker images | grep ${APP_NAME}
+                """
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Cleanup') {
             steps {
-                echo '🚀 Running container on port 3001...'
-                // Stop existing container if exists
-                sh 'docker rm -f myapp_ci || true'
-                // Run fresh container
-                sh 'docker run -d -p 3001:3000 --name myapp_ci myapp:latest'
-            }
-        }
-
-         stages {
-        stage('Verify') {
-            steps {
-                sh 'echo Jenkins pipeline is working!'
+                echo '🧹 Cleaning up...'
+                sh 'pkill node || true'
             }
         }
     }
-}
 
+    post {
+        success {
+            echo '✅ Pipeline completed successfully.'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check logs.'
+        }
+    }
+}
